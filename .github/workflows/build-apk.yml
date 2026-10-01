@@ -25,13 +25,10 @@ jobs:
 
       - name: Setup Android SDK - accept licenses and install platforms
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          ls -la $ANDROID_HOME || true
           yes | sdkmanager --licenses || true
           sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
           sdkmanager --install "platforms;android-33" "build-tools;33.0.1" || true
           sdkmanager --list_installed || true
-          echo "SDK setup done"
 
       - name: Setup Gradle 8.7
         uses: gradle/actions/setup-gradle@v3
@@ -52,11 +49,36 @@ jobs:
           ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
           exit ${PIPESTATUS[0]}
 
-      - name: Upload build log on failure
+      - name: Show build log tail on failure
+        if: failure()
+        run: |
+          echo "=== BUILD LOG TAIL (last 500 lines) ==="
+          tail -n 500 build.log || true
+          echo "=== END TAIL ==="
+          echo "## Build Failure Log" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 300 build.log >> $GITHUB_STEP_SUMMARY || echo "no log" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Push build log to logs branch for debugging (on failure)
+        if: failure()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          # Save log
+          cp build.log build-failure-${{ github.run_number }}.log || echo "no build.log" > build-failure-${{ github.run_number }}.log
+          # Create or checkout logs branch
+          git fetch origin logs || true
+          git checkout -B logs
+          git add build-failure-${{ github.run_number }}.log
+          git commit -m "Build failure log run ${{ github.run_number }}" || echo "nothing to commit"
+          git push origin logs --force || echo "push failed"
+
+      - name: Upload build log artifact on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
+          name: build-log-${{ github.run_number }}
           path: |
             build.log
             app/build/reports/
