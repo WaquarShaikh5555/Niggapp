@@ -25,9 +25,13 @@ jobs:
 
       - name: Setup Android SDK - accept licenses and install platforms
         run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls -la $ANDROID_HOME || true
           yes | sdkmanager --licenses || true
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools" "platforms;android-33" "build-tools;33.0.1" || true
-          sdkmanager --list_installed
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
+          sdkmanager --install "platforms;android-33" "build-tools;33.0.1" || true
+          sdkmanager --list_installed || true
+          echo "SDK setup done"
 
       - name: Setup Gradle 8.7
         uses: gradle/actions/setup-gradle@v3
@@ -46,7 +50,6 @@ jobs:
         id: build
         run: |
           ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
-          echo "Build exit code: ${PIPESTATUS[0]}"
           exit ${PIPESTATUS[0]}
 
       - name: Upload build log on failure
@@ -57,7 +60,6 @@ jobs:
           path: |
             build.log
             app/build/reports/
-            app/build/outputs/logs/
           retention-days: 7
 
       - name: Check APK exists
