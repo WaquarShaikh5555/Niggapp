@@ -353,7 +353,7 @@ fun MainScreen(
                         modifier = Modifier.size(56.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Cameraswitch,
+                            imageVector = Icons.Default.FlipCameraAndroid,
                             contentDescription = "Flip camera"
                         )
                     }
@@ -369,7 +369,7 @@ fun MainScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 CircularProgressIndicator(
-                                    progress = { (uiState.cooldownRemaining / (uiState.settings.cooldownSeconds * 1000f)).coerceIn(0f, 1f) },
+                                    progress = (uiState.cooldownRemaining / (uiState.settings.cooldownSeconds * 1000f)).coerceIn(0f, 1f),
                                     modifier = Modifier.size(20.dp),
                                     color = NeonPurple,
                                     strokeWidth = 2.dp
