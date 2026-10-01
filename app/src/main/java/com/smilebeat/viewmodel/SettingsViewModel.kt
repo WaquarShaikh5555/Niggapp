@@ -52,9 +52,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun getAvailableTracks(): List<String> {
         return try {
             val rawClass = com.smilebeat.R.raw::class.java
-            rawClass.fields.map { it.name }.filter { it != "README" }.sorted()
+            rawClass.fields.map { it.name }
+                .filter { !it.lowercase().contains("readme") }
+                .sorted()
         } catch (e: Exception) {
-            listOf("phonk_vibe_01", "midnight_phonk")
+            listOf("phonk_vibe_01", "midnight_phonk", "miguel_nights")
         }
     }
 }

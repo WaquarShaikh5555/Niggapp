@@ -270,9 +270,12 @@ class AudioPlayerManager(private val context: Context) {
         // Use reflection over R.raw to list bundled tracks
         return try {
             val rawClass = com.smilebeat.R.raw::class.java
-            rawClass.fields.map { it.name }.filter { it != "README" }.sorted()
+            rawClass.fields.map { it.name }
+                .filter { !it.lowercase().contains("readme") }
+                .filter { it.endsWith(".wav").not() } // R fields don't have extension, but keep filter
+                .sorted()
         } catch (e: Exception) {
-            listOf("phonk_vibe_01", "midnight_phonk")
+            listOf("phonk_vibe_01", "midnight_phonk", "miguel_nights")
         }
     }
 
