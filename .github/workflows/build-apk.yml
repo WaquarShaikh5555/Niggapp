@@ -23,8 +23,9 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+        # v2 is more stable than v3
 
       - name: Setup Gradle 8.7
         uses: gradle/actions/setup-gradle@v3
@@ -33,20 +34,18 @@ jobs:
 
       - name: Generate Gradle Wrapper if missing
         run: |
+          echo "Checking wrapper..."
           ls -la gradle/wrapper/ || echo "no wrapper dir"
           if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "Wrapper JAR missing, generating via gradle wrapper..."
+            echo "Wrapper JAR missing, generating..."
             gradle wrapper --gradle-version 8.7
-            ls -lh gradle/wrapper/
           fi
-          chmod +x gradlew || true
+          chmod +x gradlew
           ls -lh gradle/wrapper/
+          cat gradle/wrapper/gradle-wrapper.properties
 
       - name: Build Debug APK
-        run: |
-          ./gradlew assembleDebug --stacktrace
-        # fallback to gradle if wrapper fails
-        continue-on-error: false
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Check APK exists
         run: |
@@ -86,10 +85,11 @@ jobs:
             - Triggers phonk track when tone <= threshold for 5 frames
             - Volume, threshold, cooldown, track picker in Settings
             - Dark neon UI with Tone Meter
+            - 3 bundled Miguel-inspired phonk tracks: phonk_vibe_01, midnight_phonk, miguel_nights (original synthetic royalty-free)
 
-            **Audio:** Bundled tracks are original synthetic royalty-free phonk (Miguel-inspired dark R&B/phonk). Replace with your licensed tracks in res/raw.
+            **Audio:** All tracks are original synthetic royalty-free phonk (Miguel-inspired dark R&B/phonk). Replace with your licensed tracks in res/raw for production.
 
-            Built via GitHub Actions - no PC needed!
+            Built via GitHub Actions - no PC needed! Download from Assets below.
           files: app/build/outputs/apk/debug/app-debug.apk
           draft: false
           prerelease: false
