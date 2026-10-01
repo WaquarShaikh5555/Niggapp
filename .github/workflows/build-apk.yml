@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -20,31 +22,36 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Ensure Gradle Wrapper JAR exists
+      - name: Setup Gradle 8.7
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
+
+      - name: Generate Gradle Wrapper if missing
         run: |
+          ls -la gradle/wrapper/ || echo "no wrapper dir"
           if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "Wrapper JAR missing, downloading..."
-            mkdir -p gradle/wrapper
-            # Try multiple sources
-            curl -L -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.7.0/gradle/wrapper/gradle-wrapper.jar || \
-            curl -L -o gradle/wrapper/gradle-wrapper.jar https://services.gradle.org/distributions/gradle-wrapper.jar || \
-            wget -O gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.7.0/gradle/wrapper/gradle-wrapper.jar
-            ls -lh gradle/wrapper/
-          else
-            echo "Wrapper JAR exists"
+            echo "Wrapper JAR missing, generating via gradle wrapper..."
+            gradle wrapper --gradle-version 8.7
             ls -lh gradle/wrapper/
           fi
-
-      - name: Make gradlew executable
-        run: chmod +x gradlew
+          chmod +x gradlew || true
+          ls -lh gradle/wrapper/
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --info
+        run: |
+          ./gradlew assembleDebug --stacktrace
+        # fallback to gradle if wrapper fails
+        continue-on-error: false
+
+      - name: Check APK exists
+        run: |
+          ls -lh app/build/outputs/apk/debug/
+          du -h app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -54,38 +61,35 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Upload APK to Release (on main push)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: build-${{ github.run_number }}
-          name: SmileBeat Build ${{ github.run_number }}
-          files: app/build/outputs/apk/debug/app-debug.apk
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Always create a release for manual builds too for easy download
-      - name: Create Release for this build
-        if: always()
+      - name: Create GitHub Release with APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}
           name: SmileBeat APK - Build ${{ github.run_number }}
           body: |
-            **SmileBeat Debug APK**
-            - Built from branch: ${{ github.ref_name }}
+            **SmileBeat Debug APK - Direct Download for Phone**
+
+            - Branch: ${{ github.ref_name }}
             - Commit: ${{ github.sha }}
-            - Download app-debug.apk below and install on Android 8.0+ (min SDK 26)
+            - Min SDK 26 (Android 8.0+)
 
-            Privacy: 100% on-device, no upload, no face storage.
-            
-            How to install:
-            1. Download app-debug.apk on your phone
-            2. Open file → Allow install from unknown sources if prompted
-            3. Grant camera permission → Enjoy VIBE
+            **Privacy:** 100% on-device, no upload, no face storage. Camera stays on device.
 
-            Bundled tracks are synthetic royalty-free placeholders. Replace with licensed phonk in res/raw for production.
+            **Install:**
+            1. Download app-debug.apk below on your phone
+            2. Tap file -> Allow install from unknown sources if prompted
+            3. Open app -> Grant camera -> VIBE READY
+
+            **Features:**
+            - Front camera default, flip button
+            - On-device face detection (ML Kit) + HSV tone analysis
+            - Triggers phonk track when tone <= threshold for 5 frames
+            - Volume, threshold, cooldown, track picker in Settings
+            - Dark neon UI with Tone Meter
+
+            **Audio:** Bundled tracks are original synthetic royalty-free phonk (Miguel-inspired dark R&B/phonk). Replace with your licensed tracks in res/raw.
+
+            Built via GitHub Actions - no PC needed!
           files: app/build/outputs/apk/debug/app-debug.apk
           draft: false
           prerelease: false
