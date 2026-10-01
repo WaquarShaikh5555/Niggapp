@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+build/
+app/build/
+*/build/
+
+# Local config
+local.properties
+*.iml
+.idea/
+*.jks
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Wrapper jar - include if possible, but ignore if not present
+# Uncomment to ignore wrapper jar if you generate locally
+# gradle/wrapper/gradle-wrapper.jar
+
+# APK
+*.apk
+*.aab

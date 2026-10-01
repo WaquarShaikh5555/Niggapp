@@ -1,0 +1,10 @@
+<resources>
+    <color name="black">#FF0A0A0F</color>
+    <color name="purple_200">#FFD4B5FF</color>
+    <color name="purple_500">#FFB026FF</color>
+    <color name="purple_700">#FF7A1CFF</color>
+    <color name="red_neon">#FFFF2A6D</color>
+    <color name="cyan_neon">#FF05FFA1</color>
+    <color name="surface_dark">#FF14141E</color>
+    <color name="surface_variant">#FF1E1E2A</color>
+</resources>

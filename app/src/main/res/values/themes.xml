@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.SmileBeat" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:navigationBarColor">@color/black</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
