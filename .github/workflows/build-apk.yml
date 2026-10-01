@@ -1,0 +1,93 @@
+name: Build SmileBeat APK
+
+on:
+  push:
+    branches:
+      - main
+      - arena/*
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Ensure Gradle Wrapper JAR exists
+        run: |
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "Wrapper JAR missing, downloading..."
+            mkdir -p gradle/wrapper
+            # Try multiple sources
+            curl -L -o gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.7.0/gradle/wrapper/gradle-wrapper.jar || \
+            curl -L -o gradle/wrapper/gradle-wrapper.jar https://services.gradle.org/distributions/gradle-wrapper.jar || \
+            wget -O gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/v8.7.0/gradle/wrapper/gradle-wrapper.jar
+            ls -lh gradle/wrapper/
+          else
+            echo "Wrapper JAR exists"
+            ls -lh gradle/wrapper/
+          fi
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace --info
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmileBeat-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload APK to Release (on main push)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: SmileBeat Build ${{ github.run_number }}
+          files: app/build/outputs/apk/debug/app-debug.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Always create a release for manual builds too for easy download
+      - name: Create Release for this build
+        if: always()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: SmileBeat APK - Build ${{ github.run_number }}
+          body: |
+            **SmileBeat Debug APK**
+            - Built from branch: ${{ github.ref_name }}
+            - Commit: ${{ github.sha }}
+            - Download app-debug.apk below and install on Android 8.0+ (min SDK 26)
+
+            Privacy: 100% on-device, no upload, no face storage.
+            
+            How to install:
+            1. Download app-debug.apk on your phone
+            2. Open file → Allow install from unknown sources if prompted
+            3. Grant camera permission → Enjoy VIBE
+
+            Bundled tracks are synthetic royalty-free placeholders. Replace with licensed phonk in res/raw for production.
+          files: app/build/outputs/apk/debug/app-debug.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
