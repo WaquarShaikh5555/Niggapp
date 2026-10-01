@@ -23,9 +23,14 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
-        # v2 is more stable than v3
+      - name: Check Android SDK preinstalled
+        run: |
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+          ls -la /usr/local/lib/android/sdk || echo "no sdk at /usr/local/lib/android/sdk"
+          ls -la $ANDROID_HOME || echo "ANDROID_HOME not set or not exist"
+          sdkmanager --version || echo "sdkmanager not found"
+          sdkmanager --list_installed 2>&1 | head -n 100
 
       - name: Setup Gradle 8.7
         uses: gradle/actions/setup-gradle@v3
@@ -34,7 +39,6 @@ jobs:
 
       - name: Generate Gradle Wrapper if missing
         run: |
-          echo "Checking wrapper..."
           ls -la gradle/wrapper/ || echo "no wrapper dir"
           if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
             echo "Wrapper JAR missing, generating..."
@@ -42,7 +46,6 @@ jobs:
           fi
           chmod +x gradlew
           ls -lh gradle/wrapper/
-          cat gradle/wrapper/gradle-wrapper.properties
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace --no-daemon
@@ -86,8 +89,6 @@ jobs:
             - Volume, threshold, cooldown, track picker in Settings
             - Dark neon UI with Tone Meter
             - 3 bundled Miguel-inspired phonk tracks: phonk_vibe_01, midnight_phonk, miguel_nights (original synthetic royalty-free)
-
-            **Audio:** All tracks are original synthetic royalty-free phonk (Miguel-inspired dark R&B/phonk). Replace with your licensed tracks in res/raw for production.
 
             Built via GitHub Actions - no PC needed! Download from Assets below.
           files: app/build/outputs/apk/debug/app-debug.apk
