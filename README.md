@@ -29,7 +29,7 @@ An honest, private Android app for recent mistakes. Every event answers four que
 
 ## Install
 
-1. Open the **Actions** tab, pick the latest **Build APK** run, and download the `undo-apk` artifact. Tagged runs also publish a GitHub Release.
+1. Open **Releases** and download the latest `UNDO-N.apk` on your phone. Each green CI run publishes one; it's also attached to the run as the `UNDO-apk-N` artifact.
 2. On your phone, open the APK and allow "install unknown apps" for your browser or file manager.
 3. On Android 13+, sideloaded apps need one extra step before notification access can be turned on: **App info → ⋮ → Allow restricted settings**. UNDO walks you through it.
 

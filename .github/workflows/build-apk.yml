@@ -53,10 +53,12 @@ jobs:
       - name: Failure summary
         if: failure()
         run: |
+          grep -hE '^e: |error:|FAILED|What went wrong|Exception|^> |expected:' test.log build.log 2>/dev/null \
+            | grep -vE '^\s+at ' | sed -E 's#file://[^ ]*/app/src/(main|test)/java/app/undo/##' | awk '!seen[$0]++' | head -150 > errs.txt || true
           echo '## Build failure' >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          (grep -E '^e: |error:|FAILED|Exception' test.log build.log 2>/dev/null | head -80) >> $GITHUB_STEP_SUMMARY || true
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY; cat errs.txt >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY
+          split -l 15 errs.txt chunk_ || true
+          for f in chunk_*; do [ -s "$f" ] && echo "::error title=$f::$(sed -e 's/%/%25/g' "$f" | sed -e ':a;N;$!ba;s/\n/%0A/g')"; done
 
       - name: Upload test reports
         if: always()
