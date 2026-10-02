@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lite edition: no notification listener, so Play Protect's sideload fraud check doesn't block the install. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <service
+            android:name=".capture.UndoNotificationListener"
+            tools:node="remove" />
+    </application>
+</manifest>

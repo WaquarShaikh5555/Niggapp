@@ -116,7 +116,7 @@ fun HomeScreen(vm: AppViewModel) {
                 PanicCard { vm.go(Route.Panic) }
             }
         }
-        if (!caps.listener) item {
+        if (!caps.listener && app.undo.BuildConfig.HAS_LISTENER) item {
           Column {
             Spacer(Modifier.height(Space.m))
             SurfaceCard(onClick = { vm.go(Route.Capabilities) }) {
@@ -355,7 +355,8 @@ private fun CalmState(caps: Caps, enabled: Set<Detector>) {
                     Box(Modifier.size(8.dp).clip(CircleShape).background(if (on) c.good else c.hairline))
                     Spacer(Modifier.width(Space.s))
                     Text(
-                        label + if (!available) " — needs access" else if (det !in enabled) " — off" else "",
+                        label + if (!available && !app.undo.BuildConfig.HAS_LISTENER && (det == Detector.PAYMENTS || det == Detector.NOTIFICATIONS)) " — full edition only"
+                        else if (!available) " — needs access" else if (det !in enabled) " — off" else "",
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (on) c.inkSoft else c.muted,
                     )

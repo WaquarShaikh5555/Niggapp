@@ -113,14 +113,25 @@ fun CapabilitiesScreen(vm: AppViewModel) {
             )
             Spacer(Modifier.height(Space.l))
 
-            CapCard(
+            if (!app.undo.BuildConfig.HAS_LISTENER) {
+                SurfaceCard(color = c.sunk, modifier = Modifier.padding(bottom = Space.m)) {
+                    Column {
+                        Text("Notification access · not in UNDO Lite", style = MaterialTheme.typography.titleMedium, color = c.ink)
+                        Spacer(Modifier.height(Space.xs))
+                        Text(
+                            "Lite leaves out notification access so it installs without being blocked by Play Protect. You lose automatic payment, renewal and swiped-notification detection — but every guide in “Something went wrong?” still works, including payment recovery.",
+                            style = MaterialTheme.typography.bodySmall, color = c.inkSoft,
+                        )
+                    }
+                }
+            } else CapCard(
                 title = "Notification access",
                 on = caps.listener,
                 unlocks = "Payments, renewals and subscription warnings · Reopen notifications you swiped away · Detect Do Not Disturb changes",
                 never = "Never reads one-time codes or promos, never replies, never dismisses anything.",
                 action = "Turn on",
             ) { if (!Launch.notificationAccess(ctx)) snack("Couldn't open notification access settings") }
-            if (!caps.listener && Build.VERSION.SDK_INT >= 33) {
+            if (app.undo.BuildConfig.HAS_LISTENER && !caps.listener && Build.VERSION.SDK_INT >= 33) {
                 SurfaceCard(color = c.guideBg, modifier = Modifier.padding(bottom = Space.m)) {
                     Column {
                         Text("Greyed out? That's Android protecting you", style = MaterialTheme.typography.titleSmall, color = c.guide)
@@ -232,7 +243,12 @@ fun SettingsScreen(vm: AppViewModel) {
             ToggleRow("Pause UNDO", "Stop noticing anything new until you resume", prefs.paused, { Graph.prefs.setPaused(it) })
             Hairline()
             Detector.values().forEach { d ->
-                ToggleRow(d.title, d.description, d in prefs.enabled, { Graph.prefs.setDetector(d, it) }, enabled = !prefs.paused)
+                val needsListener = d == Detector.PAYMENTS || d == Detector.SUBSCRIPTIONS || d == Detector.NOTIFICATIONS
+                val lite = needsListener && !app.undo.BuildConfig.HAS_LISTENER
+                ToggleRow(
+                    d.title, if (lite) "Full edition only — Lite has no notification access" else d.description,
+                    d in prefs.enabled && !lite, { Graph.prefs.setDetector(d, it) }, enabled = !prefs.paused && !lite,
+                )
             }
             Spacer(Modifier.height(Space.s))
             LinkRow("Permissions & what UNDO can see") { vm.go(Route.Capabilities) }
@@ -258,7 +274,7 @@ fun SettingsScreen(vm: AppViewModel) {
             UndoButton("Delete everything", { confirmDelete = true }, Modifier.fillMaxWidth(), kind = ButtonKind.Secondary, icon = Icons.Rounded.DeleteForever)
 
             SectionTitle("About")
-            Text("UNDO 0.1 · Ctrl+Z for your phone", style = MaterialTheme.typography.titleSmall, color = c.ink)
+            Text("UNDO ${app.undo.BuildConfig.VERSION_NAME} · Ctrl+Z for your phone", style = MaterialTheme.typography.titleSmall, color = c.ink)
             Text("UNDO either fixes what you just did, or tells you exactly what you can do next. It never claims to reverse something it can't, and never sends anything for you.", style = MaterialTheme.typography.bodySmall, color = c.muted)
             Spacer(Modifier.height(Space.s))
             LinkRow("Open-source licences", "Space Grotesk (SIL OFL 1.1), AndroidX & Jetpack Compose (Apache 2.0)") {

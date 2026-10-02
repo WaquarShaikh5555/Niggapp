@@ -29,14 +29,22 @@ An honest, private Android app for recent mistakes. Every event answers four que
 
 ## Install
 
-1. Open **Releases** and download the latest `UNDO-N.apk` on your phone. Each green CI run publishes one; it's also attached to the run as the `UNDO-apk-N` artifact.
-2. On your phone, open the APK and allow "install unknown apps" for your browser or file manager.
-3. On Android 13+, sideloaded apps need one extra step before notification access can be turned on: **App info → ⋮ → Allow restricted settings**. UNDO walks you through it.
+Download from **Releases** on your phone:
+
+- **`UNDO-Lite-N.apk` — start here.** It installs straight from your browser. It leaves out notification access, so it can't detect payments, renewals or swiped-away notifications automatically. Deleted-media restore, setting restore, uninstalled apps and every recovery guide still work.
+- **`UNDO-N.apk` — full edition.** It declares a notification listener. In some regions, including India, Google Play Protect's *enhanced fraud protection* blocks any APK downloaded from a browser, chat app or file manager if it declares notification, SMS or accessibility access. This is because scam apps abuse them to steal OTPs. Play Protect has no "install anyway" button for this. Your options:
+  1. Install it from a computer: `adb install UNDO-N.apk`. Play Protect's check targets downloads from browsers, chat apps and file managers, so a USB install should get through.
+  2. Turn off "Scan apps with Play Protect" in Play Store → profile → Play Protect → ⚙, install, then **turn it straight back on**. Only do this for an APK you built yourself or trust.
+  3. Wait for a Play Store listing. Play Store installs aren't affected.
+
+  On Android 13+, a sideloaded full edition also needs **App info → ⋮ → Allow restricted settings** before notification access can be switched on.
+
+Both editions share an app ID and signing key, so you can install one over the other and keep your history.
 
 ## Build
 
 ```bash
-./gradlew :app:testReleaseUnitTest :app:assembleRelease   # JDK 17, Android SDK 34
+./gradlew :app:testFullReleaseUnitTest :app:assembleFullRelease :app:assembleLiteRelease   # JDK 17, Android SDK 34
 ```
 
 CI (`.github/workflows/build-apk.yml`) runs the engine unit tests and builds a minified release APK.

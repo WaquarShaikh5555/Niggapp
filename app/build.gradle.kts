@@ -18,6 +18,22 @@ android {
         versionName = "0.1.$buildNumber"
     }
 
+    // "full" includes the notification listener (payments, renewals, swiped-away notifications).
+    // "lite" leaves it out: Google Play Protect blocks sideloaded APKs that declare notification
+    // access in some regions (e.g. India), so lite installs from a browser without any extra steps.
+    flavorDimensions += "edition"
+    productFlavors {
+        create("full") {
+            dimension = "edition"
+            buildConfigField("boolean", "HAS_LISTENER", "true")
+        }
+        create("lite") {
+            dimension = "edition"
+            versionNameSuffix = "-lite"
+            buildConfigField("boolean", "HAS_LISTENER", "false")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true

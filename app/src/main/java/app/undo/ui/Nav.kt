@@ -65,11 +65,11 @@ data class Caps(
     val alerts: Boolean,
 ) {
     val detectorsOn: Int get() = listOf(listener, media == MediaWatcher.Access.FULL).count { it } + 2 // apps + settings need no permission
-    val detectorsTotal: Int get() = 4
+    val detectorsTotal: Int get() = if (app.undo.BuildConfig.HAS_LISTENER) 4 else 3
 
     companion object {
         fun read(ctx: Context) = Caps(
-            listener = UndoNotificationListener.isEnabled(ctx),
+            listener = app.undo.BuildConfig.HAS_LISTENER && UndoNotificationListener.isEnabled(ctx),
             media = MediaWatcher.access(ctx),
             usage = UsageContext.hasAccess(ctx),
             writeSettings = SettingsWatcher.canWrite(ctx),
