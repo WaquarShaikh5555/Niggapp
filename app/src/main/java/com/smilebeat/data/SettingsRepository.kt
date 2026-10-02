@@ -18,7 +18,7 @@ data class AppSettings(
     val volume: Float = 0.7f,
     val toneThreshold: Float = 0.45f, // 0=darkest, 1=brightest; trigger when <= threshold
     val cooldownSeconds: Int = 3,
-    val selectedTrack: String = "phonk_vibe_01",
+    val selectedTrack: String = "miguel_nights", // Default Miguel-inspired dark R&B/phonk
     val detectionMode: DetectionMode = DetectionMode.DARKER_VISIBLE_TONE,
     val previewEnabled: Boolean = true,
     val isMuted: Boolean = false
@@ -41,7 +41,7 @@ class SettingsRepository(private val context: Context) {
             volume = prefs[Keys.VOLUME] ?: 0.7f,
             toneThreshold = prefs[Keys.TONE_THRESHOLD] ?: 0.45f,
             cooldownSeconds = prefs[Keys.COOLDOWN] ?: 3,
-            selectedTrack = prefs[Keys.SELECTED_TRACK] ?: "phonk_vibe_01",
+            selectedTrack = prefs[Keys.SELECTED_TRACK] ?: "miguel_nights",
             detectionMode = try {
                 DetectionMode.valueOf(prefs[Keys.DETECTION_MODE] ?: DetectionMode.DARKER_VISIBLE_TONE.name)
             } catch (e: Exception) {

@@ -26,7 +26,7 @@ class AudioPlayerManager(private val context: Context) {
 
     data class AudioState(
         val playbackState: PlaybackState = PlaybackState.IDLE,
-        val currentTrack: String = "phonk_vibe_01",
+        val currentTrack: String = "miguel_nights",
         val volume: Float = 0.7f,
         val isMuted: Boolean = false,
         val errorMessage: String? = null
