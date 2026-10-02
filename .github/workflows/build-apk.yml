@@ -54,7 +54,7 @@ jobs:
         if: failure()
         run: |
           grep -hE '^e: |error:|FAILED|What went wrong|Exception|^> |expected:' test.log build.log 2>/dev/null \
-            | grep -vE '^\s+at ' | sed -E 's#file://[^ ]*/app/src/(main|test)/java/app/undo/##' | awk '!seen[$0]++' | head -150 > errs.txt || true
+            | grep -vE '^\s+at |^> Task|^> Run with|^> Get more' | sed -E 's#file://[^ ]*/app/src/(main|test)/java/app/undo/##' | awk '!seen[$0]++' | head -150 > errs.txt || true
           echo '## Build failure' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY; cat errs.txt >> $GITHUB_STEP_SUMMARY; echo '```' >> $GITHUB_STEP_SUMMARY
           split -l 15 errs.txt chunk_ || true
