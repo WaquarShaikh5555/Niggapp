@@ -1,0 +1,99 @@
+name: Build UNDO APK
+
+on:
+  push:
+    branches:
+      - main
+      - arena/*
+  workflow_dispatch:
+
+concurrency:
+  group: undo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-34 build-tools;34.0.0 platform-tools'
+
+      - name: Set up Gradle 8.7
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
+
+      # Keep one signing key across builds so a new APK installs over the old one
+      # (and UNDO keeps your local history). The key never leaves the CI cache.
+      - name: Restore signing key cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: undo-sideload-keystore-v1
+
+      - name: Unit tests (classification, payment parsing, prioritisation)
+        run: gradle :app:testReleaseUnitTest --no-daemon --stacktrace 2>&1 | tee test.log; exit ${PIPESTATUS[0]}
+
+      - name: Build release APK
+        run: gradle :app:assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
+
+      - name: Failure summary
+        if: failure()
+        run: |
+          echo '## Build failure' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          (grep -E '^e: |error:|FAILED|Exception' test.log build.log 2>/dev/null | head -80) >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ github.run_number }}
+          path: app/build/reports/tests/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/release/app-release.apk UNDO-${{ github.run_number }}.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UNDO-apk-${{ github.run_number }}
+          path: UNDO-${{ github.run_number }}.apk
+          retention-days: 30
+
+      - name: Publish release (direct download for your phone)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: undo-v0.1.${{ github.run_number }}
+          name: UNDO v0.1.${{ github.run_number }}
+          make_latest: 'true'
+          body: |
+            **UNDO — Ctrl+Z for your phone.** Android 8.0+.
+
+            Download `UNDO-${{ github.run_number }}.apk` below on your phone, open it, and allow installing from this source.
+
+            **Android 13+ sideload note:** if the *Notification access* switch for UNDO is greyed out, open
+            Settings → Apps → UNDO → ⋮ (top-right) → *Allow restricted settings*, then try again.
+
+            Privacy: UNDO declares no internet permission. Everything stays on your phone.
+
+            Branch `${{ github.ref_name }}` · commit `${{ github.sha }}`
+          files: UNDO-${{ github.run_number }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

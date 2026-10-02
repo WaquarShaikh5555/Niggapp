@@ -1,0 +1,16 @@
+.gradle/
+build/
+*/build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+*.apk
+*.aab
+# Signing material never belongs in the repo
+*.jks
+*.keystore
+*.p12
+gradle/wrapper/gradle-wrapper.jar
+gradlew
+gradlew.bat
